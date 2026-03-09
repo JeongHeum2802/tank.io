@@ -66,7 +66,7 @@ export class GameRoom extends Room<GameState> {
       } else if (message.stat === "shotgunLevel") {
         player.shotgunLevel += 1;
       } else if (message.stat === "bulletSize") {
-        player.bulletSize += 0.5; // 투사체 크기 증가 팩터
+        player.bulletSize += 0.3; // 투사체 크기 증가 팩터
       }
 
       player.levelUpsPending--;
@@ -158,7 +158,7 @@ export class GameRoom extends Room<GameState> {
           const velY = (bulletDy / bulletDist) * 400;
 
           // 다중 발사(shotgunLevel) 로직: 0이면 단발, 1 이상이면 여러 방 퍼져서(Spread) 나간다.
-          const bulletCounts = player.shotgunLevel === 0 ? 1 : 1 + (player.shotgunLevel * 2); 
+          const bulletCounts = player.shotgunLevel === 0 ? 1 : 1 + (player.shotgunLevel * 2);
           const spreadAngle = 0.2; // 부채꼴 퍼짐 방사각 (Radian)
 
           const baseAngle = Math.atan2(bulletDy, bulletDx);
@@ -166,7 +166,7 @@ export class GameRoom extends Room<GameState> {
 
           for (let i = 0; i < bulletCounts; i++) {
             const angle = startAngle + spreadAngle * i;
-            
+
             const bullet = new Bullet();
             bullet.x = player.x;
             bullet.y = player.y;
@@ -176,7 +176,7 @@ export class GameRoom extends Room<GameState> {
 
             // bulletSize를 속성으로 추가 (GameState.ts의 Bullet 클래스 scale 변수에 반영됨)
             bullet.scale = player.bulletSize || 1;
-            
+
             bullet.velocityX = Math.cos(angle) * 400;
             bullet.velocityY = Math.sin(angle) * 400;
 
@@ -211,18 +211,18 @@ export class GameRoom extends Room<GameState> {
 
             // 레벨업 시 서버에서 무작위 선택지 3개를 선정해서 이 플레이어에게 보냅니다.
             const statsPool = ['damage', 'attackSpeed', 'range', 'speed', 'maxHp', 'magnetRadius', 'shotgunLevel', 'bulletSize'];
-            
+
             // 셔플 알고리즘 (Fisher-Yates)
             for (let i = statsPool.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [statsPool[i], statsPool[j]] = [statsPool[j], statsPool[i]];
+              const j = Math.floor(Math.random() * (i + 1));
+              [statsPool[i], statsPool[j]] = [statsPool[j], statsPool[i]];
             }
             const choices = statsPool.slice(0, 3);
-            
+
             // 해당 플레이어의 클라이언트 소켓에게만 전송
             const clientTarget = this.clients.find(c => c.sessionId === sessionId);
             if (clientTarget) {
-               clientTarget.send("onLevelUpChoices", { choices });
+              clientTarget.send("onLevelUpChoices", { choices });
             }
           }
         }
@@ -259,7 +259,7 @@ export class GameRoom extends Room<GameState> {
 
         const dx = bullet.x - player.x;
         const dy = bullet.y - player.y;
-        
+
         // 플레이어 반지름(20) + 총알 기본 반지름(5) * 스케일값
         const bulletRadius = 5 * bullet.scale;
         const hitDistSq = (20 + bulletRadius) * (20 + bulletRadius);
@@ -277,6 +277,7 @@ export class GameRoom extends Room<GameState> {
             player.targetX = player.x;
             player.targetY = player.y;
             player.level = 1;
+            player.maxHp = 100;
             player.hp = player.maxHp;
             player.xp = 0;
             player.xpMax = 100;
@@ -284,6 +285,16 @@ export class GameRoom extends Room<GameState> {
             player.damage = 10;
             player.attackSpeed = 1000;
             player.range = 1000;
+            player.speed = 200;
+            player.magnetRadius = 0;
+            player.shotgunLevel = 0;
+            player.bulletSize = 1;
+
+            // 사망한 플레이어 본인에게만 '사망 및 스탯 초기화' 메시지 전송
+            const clientTarget = this.clients.find(c => c.sessionId === sessionId);
+            if (clientTarget) {
+              clientTarget.send("onPlayerDeath");
+            }
           }
         }
       });
