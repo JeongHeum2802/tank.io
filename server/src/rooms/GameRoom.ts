@@ -177,17 +177,12 @@ export class GameRoom extends Room<GameState> {
           while (player.xp >= player.xpMax) {
             player.xp -= player.xpMax;
             player.level += 1;
-            player.xpMax = Math.floor(player.xpMax * 1.3);
+            player.xpMax = Math.floor(player.xpMax * 1.1);
             player.levelUpsPending++;
 
             // 레벨업 시 체력 완전 회복
-            player.maxHp += 20; // 레벨당 최대 체력 20 증가
+            player.maxHp += 10; // 레벨당 최대 체력 20 증가
             player.hp = player.maxHp;
-
-            // 레벨업당 20개 구슬 추가 소환
-            for (let i = 0; i < 20; i++) {
-              this.spawnOrb();
-            }
           }
         }
       });
