@@ -20,10 +20,6 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ stats, nickname, isMobile }
 
   return (
     <div style={{
-      position: 'absolute',
-      top: isMobile ? '10px' : '20px',
-      left: isMobile ? '10px' : '20px',
-      zIndex: 1000,
       pointerEvents: 'none',
       fontFamily: "'Inter', sans-serif",
       color: 'white',
@@ -32,8 +28,6 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ stats, nickname, isMobile }
       gap: isMobile ? '4px' : '8px',
       textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
       minWidth: isMobile ? '200px' : '280px',
-      transform: isMobile ? 'scale(0.6)' : 'none',
-      transformOrigin: 'top left'
     }}>
       {/* 닉네임 및 레벨 */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: isMobile ? '6px' : '10px' }}>

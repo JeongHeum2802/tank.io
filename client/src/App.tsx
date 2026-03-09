@@ -143,11 +143,25 @@ function App() {
       {/* 레벨업 발생 시 화면 중앙에 나타나는 스탯 업그레이드 모달 */}
       <LevelUpModal levelUpData={levelUpData} isMobile={isMobile} onUpgrade={handleStatUpgrade} />
       
-      {/* (New) 리액트 기반 좌측 상단 플레이어 상태 UI */}
-      <PlayerStatus stats={playerStats} nickname={nickname} isMobile={isMobile} />
+      {/* --- 좌측 상단 통합 UI 레이어 --- */}
+      <div style={{
+        position: 'absolute',
+        top: isMobile ? '10px' : '20px',
+        left: isMobile ? '10px' : '20px',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: isMobile ? '8px' : '12px',
+        transform: isMobile ? 'scale(0.6)' : 'none',
+        transformOrigin: 'top left',
+        pointerEvents: 'none'
+      }}>
+        {/* 리액트 기반 플레이어 상태 UI (XP/HP) */}
+        <PlayerStatus stats={playerStats} nickname={nickname} isMobile={isMobile} />
 
-      {/* 좌측 하단 스탯 업그레이드 현황 오버레이 */}
-      <StatOverlay statLevels={statLevels} isMobile={isMobile} />
+        {/* 스탯 업그레이드 현황 (상태 UI 바로 밑에 위치) */}
+        <StatOverlay statLevels={statLevels} isMobile={isMobile} />
+      </div>
     </div>
   );
 }
