@@ -19,6 +19,11 @@ export class Player extends Schema {
   @type("number") hp: number = 100;
   @type("number") maxHp: number = 100;
 
+  // 신규 추가된 확장 스탯들
+  @type("number") magnetRadius: number = 0; // 자석 사거리 (기본 0)
+  @type("number") shotgunLevel: number = 0; // 다중 발사 레벨 (0=단발, 1=3발 부채꼴, 2=5발 등)
+  @type("number") bulletSize: number = 1;   // 총알 크기 스케일 (기본 1)
+
   // 내부 서버 로직용 (levelUpsPending은 클라이언트에도 동기화 필요)
   fireTimer: number = 0;
   @type("number") levelUpsPending: number = 0;
@@ -43,6 +48,7 @@ export class Bullet extends Schema {
 
   @type("string") ownerId: string = "";
   damage: number = 10;
+  @type("number") scale: number = 1; // 총알의 시각적/물리적 크기 배율
 }
 
 export class GameState extends Schema {

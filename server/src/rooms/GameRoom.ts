@@ -56,6 +56,17 @@ export class GameRoom extends Room<GameState> {
         player.attackSpeed = Math.max(100, player.attackSpeed - 100);
       } else if (message.stat === "range") {
         player.range += 500;
+      } else if (message.stat === "speed") {
+        player.speed += 20;
+      } else if (message.stat === "maxHp") {
+        player.maxHp += 20;
+        player.hp += 20;
+      } else if (message.stat === "magnetRadius") {
+        player.magnetRadius += 30; // 자석 반경 30씩 증가
+      } else if (message.stat === "shotgunLevel") {
+        player.shotgunLevel += 1;
+      } else if (message.stat === "bulletSize") {
+        player.bulletSize += 0.5; // 투사체 크기 증가 팩터
       }
 
       player.levelUpsPending--;
@@ -142,8 +153,20 @@ export class GameRoom extends Room<GameState> {
           const bulletDy = player.targetY - player.y;
           const bulletDist = Math.sqrt(bulletDx * bulletDx + bulletDy * bulletDy);
 
-          // 타겟이 너무 가까우면 발사하지 않음 (자기 위에 쏘는 것 방지)
-          if (bulletDist > 5) {
+          // 타겟 방향으로 속도 벡터 설정
+          const velX = (bulletDx / bulletDist) * 400;
+          const velY = (bulletDy / bulletDist) * 400;
+
+          // 다중 발사(shotgunLevel) 로직: 0이면 단발, 1 이상이면 여러 방 퍼져서(Spread) 나간다.
+          const bulletCounts = player.shotgunLevel === 0 ? 1 : 1 + (player.shotgunLevel * 2); 
+          const spreadAngle = 0.2; // 부채꼴 퍼짐 방사각 (Radian)
+
+          const baseAngle = Math.atan2(bulletDy, bulletDx);
+          const startAngle = baseAngle - spreadAngle * (bulletCounts - 1) / 2;
+
+          for (let i = 0; i < bulletCounts; i++) {
+            const angle = startAngle + spreadAngle * i;
+            
             const bullet = new Bullet();
             bullet.x = player.x;
             bullet.y = player.y;
@@ -151,9 +174,11 @@ export class GameRoom extends Room<GameState> {
             bullet.damage = player.damage;
             bullet.maxLifeTime = player.range;
 
-            // 타겟 방향으로 총알 속도 벡터 설정 (속도 400)
-            bullet.velocityX = (bulletDx / bulletDist) * 400;
-            bullet.velocityY = (bulletDy / bulletDist) * 400;
+            // bulletSize를 속성으로 추가 (GameState.ts의 Bullet 클래스 scale 변수에 반영됨)
+            bullet.scale = player.bulletSize || 1;
+            
+            bullet.velocityX = Math.cos(angle) * 400;
+            bullet.velocityY = Math.sin(angle) * 400;
 
             this.bulletIdCounter++;
             this.state.bullets.set(this.bulletIdCounter.toString(), bullet);
@@ -161,9 +186,9 @@ export class GameRoom extends Room<GameState> {
         }
       }
 
-      // -- 구슬 획득 검사 --
-      // 반지름 20(player) + 8(orb) = 28. 거리 제곱 비교로 최적화
-      const collectDistSq = 28 * 28;
+      // -- 구슬 획득 검사 (자석 범위 적용) --
+      // 기본 반지름 20(player) + 8(orb) = 28 에 더하여 자석 스탯(magnetRadius)을 더해준다.
+      const collectDistSq = (28 + player.magnetRadius) * (28 + player.magnetRadius);
       const orbsToDelete: string[] = [];
 
       this.state.orbs.forEach((orb: Orb, orbId: string) => {
@@ -183,6 +208,22 @@ export class GameRoom extends Room<GameState> {
             // 레벨업 시 체력 완전 회복
             player.maxHp += 10; // 레벨당 최대 체력 20 증가
             player.hp = player.maxHp;
+
+            // 레벨업 시 서버에서 무작위 선택지 3개를 선정해서 이 플레이어에게 보냅니다.
+            const statsPool = ['damage', 'attackSpeed', 'range', 'speed', 'maxHp', 'magnetRadius', 'shotgunLevel', 'bulletSize'];
+            
+            // 셔플 알고리즘 (Fisher-Yates)
+            for (let i = statsPool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [statsPool[i], statsPool[j]] = [statsPool[j], statsPool[i]];
+            }
+            const choices = statsPool.slice(0, 3);
+            
+            // 해당 플레이어의 클라이언트 소켓에게만 전송
+            const clientTarget = this.clients.find(c => c.sessionId === sessionId);
+            if (clientTarget) {
+               clientTarget.send("onLevelUpChoices", { choices });
+            }
           }
         }
       });
@@ -218,7 +259,11 @@ export class GameRoom extends Room<GameState> {
 
         const dx = bullet.x - player.x;
         const dy = bullet.y - player.y;
-        const hitDistSq = 25 * 25; // 플레이어 반지름(20) + 총알 반지름(5)
+        
+        // 플레이어 반지름(20) + 총알 기본 반지름(5) * 스케일값
+        const bulletRadius = 5 * bullet.scale;
+        const hitDistSq = (20 + bulletRadius) * (20 + bulletRadius);
+
         if ((dx * dx + dy * dy) <= hitDistSq) {
           // 피격!
           player.hp -= bullet.damage;

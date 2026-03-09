@@ -93,7 +93,7 @@ function App() {
    * 레벨업 모달에서 업그레이드 버튼을 클릭했을 때 호출되는 핸들러입니다.
    * Phaser의 GameScene으로 업그레이드 명령을 전달합니다.
    */
-  const handleStatUpgrade = (stat: 'damage' | 'attackSpeed' | 'range') => {
+  const handleStatUpgrade = (stat: string) => {
     const scene = gameRef.current?.scene.getScene('GameScene') as GameScene;
     if (scene) {
       scene.applyStat(stat);

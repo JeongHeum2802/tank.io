@@ -23,17 +23,26 @@ export interface PlayerStats {
     hp: number;             // 현재 체력
     maxHp: number;          // 최대 체력
     levelUpsPending: number;// 사용하지 않고 적립된 레벨업 포인트
+    magnetRadius: number;   // 자석 사거리 보너스 반경
+    shotgunLevel: number;   // 샷건(다중 발사) 강화 레벨
+    bulletSize: number;     // 총알 크기 스케일
 }
 
 /**
  * 레벨업 상태 모달을 위한 정의
- * Phaser 게임의 onLevelUp 이벤트 발생 시 React 에 넘겨주는 데이터 형식.
+ * 서버가 무작위로 추첨해준 3개의 스탯 선택지를 포함합니다.
  */
 export interface LevelUpState {
-    pending: number; // 현재 쌓여있는 레벨 업그레이드 기회 횟수
+    pending: number;        // 남은 레벨업 포인트
+    choices: string[];      // 서버에서 전달받은 스탯 ID 3개 (예: ['damage', 'speed', 'bulletSize'])
     stats: {
         damage: number;
         attackSpeed: number;
         range: number;
+        maxHp: number;
+        speed: number;
+        magnetRadius: number;
+        shotgunLevel: number;
+        bulletSize: number;
     };
 }

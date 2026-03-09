@@ -50,9 +50,11 @@ export class GameScene extends Phaser.Scene {
         level: 1, xp: 0, xpMax: 100,
         damage: 10, attackSpeed: 1000, range: 1000,
         hp: 100, maxHp: 100,
-        levelUpsPending: 0
+        levelUpsPending: 0,
+        magnetRadius: 0, shotgunLevel: 0, bulletSize: 1
     };
     private mySpeed: number = 200;                    // 내 캐릭터의 현재 이동 속도
+    private latestChoices: string[] = [];             // 가장 최근 서버가 보내준 레벨업 선택지 캐시
 
     // --- 모바일 가상 조이스틱을 위한 변수 ---
     private isMobile: boolean = false;                // 접속 기기 모바일 여부
@@ -385,7 +387,8 @@ export class GameScene extends Phaser.Scene {
                     level: player.level, xp: player.xp, xpMax: player.xpMax,
                     damage: player.damage, attackSpeed: player.attackSpeed,
                     range: player.range, hp: player.hp, maxHp: player.maxHp,
-                    levelUpsPending: player.levelUpsPending
+                    levelUpsPending: player.levelUpsPending,
+                    magnetRadius: player.magnetRadius, shotgunLevel: player.shotgunLevel, bulletSize: player.bulletSize
                 };
                 this.updateUIText(); // 우상단 스탯 정보 UI 텍스트 그리기 갱신
 
@@ -403,7 +406,8 @@ export class GameScene extends Phaser.Scene {
                         level: player.level, xp: player.xp, xpMax: player.xpMax,
                         damage: player.damage, attackSpeed: player.attackSpeed,
                         range: player.range, hp: player.hp, maxHp: player.maxHp,
-                        levelUpsPending: player.levelUpsPending
+                        levelUpsPending: player.levelUpsPending,
+                        magnetRadius: player.magnetRadius, shotgunLevel: player.shotgunLevel, bulletSize: player.bulletSize
                     };
                     
                     // 즉시 바의 색상과 퍼센트 다시 그림
@@ -413,13 +417,30 @@ export class GameScene extends Phaser.Scene {
 
                     // 새로 생긴 레벨업 횟수가 존재하면 onLevelUp 이벤트를 부모 요소(React App.tsx)로 방출
                     if (player.levelUpsPending > 0 && player.levelUpsPending > prevPending) {
-                        this.events.emit('onLevelUp', {
-                            pending: player.levelUpsPending,
-                            stats: this.myPlayerStats
-                        });
+                        if (this.latestChoices.length > 0) {
+                            this.events.emit('onLevelUp', {
+                                pending: player.levelUpsPending,
+                                choices: this.latestChoices,
+                                stats: this.myPlayerStats
+                            });
+                        }
                     } else if (player.levelUpsPending === 0 && prevPending > 0) {
                         // 스탯을 다 써서 남은 레벨업 포인트가 사라졌을 때
-                        this.events.emit('onLevelUp', { pending: 0 });
+                        this.latestChoices = [];
+                        this.events.emit('onLevelUp', { pending: 0, choices: [] });
+                    }
+                });
+
+                // 서버가 보내주는 3가지 랜덤 선택지 패킷 수신
+                this.room.onMessage("onLevelUpChoices", (message: { choices: string[] }) => {
+                    this.latestChoices = message.choices;
+                    // 만약 상태 동기화가 먼저 완료되어 pending이 >0 이라면 즉시 표출
+                    if (this.myPlayerStats.levelUpsPending > 0) {
+                        this.events.emit('onLevelUp', {
+                            pending: this.myPlayerStats.levelUpsPending,
+                            choices: this.latestChoices,
+                            stats: this.myPlayerStats
+                        });
                     }
                 });
                 return;
@@ -472,6 +493,11 @@ export class GameScene extends Phaser.Scene {
         // --- 투사체 총알 (Bullets) 동기화 ---
         $(this.room.state).bullets.onAdd((bullet: any, bulletId: string) => {
             const sprite = this.add.sprite(bullet.x, bullet.y, 'bulletTexture');
+            
+            // 총알 스케일 반영 (기본 1)
+            const scale = bullet.scale || 1;
+            sprite.setScale(scale);
+
             this.bulletSprites[bulletId] = sprite; // 시각적 오브젝트
             this.bulletTargets[bulletId] = { x: bullet.x, y: bullet.y }; // 보간 목표 위치
             this.bulletVelocities[bulletId] = { vx: bullet.velocityX, vy: bullet.velocityY }; // 예측(추측 항법)을 위한 속도 정보 추가
@@ -696,7 +722,7 @@ export class GameScene extends Phaser.Scene {
      * 사용자가 UI(모달 등)에서 능력을 클릭했을 때 서버의 리셉터로 통지를 진행합니다.
      * @param stat 향상시킬 스탯 종류
      */
-    applyStat(stat: 'damage' | 'attackSpeed' | 'range') {
+    applyStat(stat: string) {
         if (this.room) {
             // Colyseus 룸 메시지 발신 ('upgradeLevel', {stat: 종류}) 전파
             this.room.send("upgradeLevel", { stat });
