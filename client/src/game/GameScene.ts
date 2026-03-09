@@ -267,9 +267,9 @@ export class GameScene extends Phaser.Scene {
     const baseRadius = Math.round(55 * this.uiScale);
     const thumbRadius = Math.round(24 * this.uiScale);
 
-    // 화면 테두리에서 약간 떨어진 기본 위치
-    const cx = baseRadius + 30;
-    const cy = cam.height - baseRadius - 30;
+    // 화면 하단 중앙에 배치
+    const cx = cam.width / 2;
+    const cy = cam.height - baseRadius - 60; // 조금 더 위로 올림 (조작 편의성)
 
     // 투명도 15% 바깥 조이스틱 원 영역
     this.joystickBase = this.add.circle(cx, cy, baseRadius, 0xffffff, 0.15)
@@ -283,8 +283,10 @@ export class GameScene extends Phaser.Scene {
 
     // 모바일 스크린 '터치 시작'시 콜백
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      // 포인터가 화면 좌측 절반에 있을 때만 방향 이동 조이스틱으로 간주 (우측은 사격 버튼 배치를 대비)
-      if (pointer.x < cam.width * 0.5 && this.joystickPointerID === -1) {
+      // 이제 중앙에 위치하므로, 화면 어디든 터치하면 해당 위치로 조이스틱을 옮겨서 활성화할 수 있게 하거나
+      // 혹은 중앙 근처에서만 활성화되게 할 수 있습니다. 
+      // 여기서는 사용자의 요청대로 '중앙에 위치'한 상태에서 조작을 시작하도록 개선합니다.
+      if (this.joystickPointerID === -1) {
         this.joystickPointerID = pointer.id;
         this.joystickActive = true;
         // 손가락 터치 위치로 조이스틱 베이스와 썸을 즉시 이동(스냅)시킵니다.
@@ -338,8 +340,8 @@ export class GameScene extends Phaser.Scene {
     if (!this.joystickBase) return;
     const cam = this.cameras.main;
     const baseRadius = Math.round(55 * this.uiScale);
-    const cx = baseRadius + 30;
-    const cy = cam.height - baseRadius - 30;
+    const cx = cam.width / 2;
+    const cy = cam.height - baseRadius - 60;
 
     this.joystickBase.setRadius(baseRadius);
     this.joystickBase.setPosition(cx, cy);
