@@ -35,12 +35,12 @@ export class GameScene extends Phaser.Scene {
 
   // 맵 배경 (월드 공간에 배치되는 격자무늬 타일)
 
-  // --- 좌측 상단 인게임 UI (Phaser Graphics 및 Text 기반) ---
-  private uiText!: Phaser.GameObjects.Text;        // 레벨, 이름, 스탯 요약 텍스트
-  private xpBarBg!: Phaser.GameObjects.Graphics;     // 경험치 바의 바탕(회색) 영역
-  private xpBarFill!: Phaser.GameObjects.Graphics;   // 경험치 바의 채워지는(녹색) 영역
-  private hpBarBg!: Phaser.GameObjects.Graphics;     // 체력 바의 바탕(회색) 영역
-  private hpBarFill!: Phaser.GameObjects.Graphics;   // 체력 바의 채워지는 영역 (녹~주~빨)
+  // --- 좌측 상단 인게임 UI 제거 (React로 이전) ---
+  // private uiText!: Phaser.GameObjects.Text;
+  // private xpBarBg!: Phaser.GameObjects.Graphics;
+  // private xpBarFill!: Phaser.GameObjects.Graphics;
+  // private hpBarBg!: Phaser.GameObjects.Graphics;
+  // private hpBarFill!: Phaser.GameObjects.Graphics;
 
   // --- 내 플레이어 제어 변수 ---
   private mySessionId: string = "";                 // Colyseus 서버가 부여해준 내 고유 ID
@@ -71,7 +71,7 @@ export class GameScene extends Phaser.Scene {
 
   // --- 반응형 UI 레이아웃 크기 설정값 ---
   private uiScale: number = 1;                      // 기준 화면 대비 UI 축소/확대 스케일 비율
-  private barWidth: number = 250;                   // 체력, 경험치 바의 목표 가로폭
+  // private barWidth: number = 250;                   // 체력, 경험치 바의 목표 가로폭 (React 이전으로 미사용)
 
   /**
    * Phaser 씬 생성자
@@ -164,9 +164,8 @@ export class GameScene extends Phaser.Scene {
       'gridTile'
     ).setDepth(-1);
 
-    // zoom 보정값: UI는 카메라 스크롤을 따르지 않지만(setScrollFactor(0)) zoom의 영향을 받으므로
-    // 1/zoom 스케일을 적용하여 시각적 크기를 동일하게 유지합니다.
-    const uiZoomScale = 1 / this.cameras.main.zoom;
+    // zoom 보정값
+    // const uiZoomScale = 1 / this.cameras.main.zoom; (React 이전으로 미사용)
 
     // 창 크기가 변경(resize)될 때 호출되는 리스너 등록
     this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
@@ -181,16 +180,14 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    // 좌상단 스탯 정보 텍스트 (Connecting... 이라는 글씨로 임시 시작점)
-    // setDepth(100)로 최상위에 렌더링되게 만듭니다.
+    // --- UI 생성 로직 제거 (React에서 처리) ---
+    /*
     const fontSize = Math.max(12, Math.round(16 * this.uiScale));
-    // 줌 적용 시 위치가 중앙으로 쏠리므로 x, y 좌표값에도 uiZoomScale을 곱해 보정합니다.
     this.uiText = this.add.text(10 * this.uiScale * uiZoomScale, 10 * this.uiScale * uiZoomScale, 'Connecting...', {
       fontSize: `${fontSize}px`, color: '#ffffff', backgroundColor: '#000000aa',
       padding: { x: 4, y: 3 }
     }).setScrollFactor(0).setDepth(100).setScale(uiZoomScale);
 
-    // 경험치(XP) 진행 바 배경 구성
     const barY = (10 + fontSize + 12) * this.uiScale;
     this.xpBarBg = this.add.graphics().setScrollFactor(0).setDepth(100).setScale(uiZoomScale);
     this.xpBarBg.fillStyle(0x555555, 1);
@@ -199,7 +196,6 @@ export class GameScene extends Phaser.Scene {
     this.xpBarFill = this.add.graphics().setScrollFactor(0).setDepth(100).setScale(uiZoomScale);
     this.updateXPBar(0, 100);
 
-    // 체력(HP) 진행 바 설정
     const hpBarY = barY + 20 * this.uiScale;
     this.hpBarBg = this.add.graphics().setScrollFactor(0).setDepth(100).setScale(uiZoomScale);
     this.hpBarBg.fillStyle(0x555555, 1);
@@ -207,6 +203,7 @@ export class GameScene extends Phaser.Scene {
 
     this.hpBarFill = this.add.graphics().setScrollFactor(0).setDepth(100).setScale(uiZoomScale);
     this.updateHPBar(100, 100);
+    */
 
     // 모바일 기기로 인식했다면 가상 조이스틱용 터치패드를 생성합니다.
     if (this.isMobile) {
@@ -231,31 +228,13 @@ export class GameScene extends Phaser.Scene {
 
     // 너무 작아지지 않게 방지 (하한 0.6x, 상한 1.2x)
     this.uiScale = Math.max(0.6, Math.min(1.2, minDim / 800));
-    // 가로 바 길이 또한 화면 폭 대비로 잡아줍니다.
-    this.barWidth = Math.max(120, Math.round(w * 0.28));
   }
 
   /**
    * UI 스케일 값이 달라졌을 때 이미 그려진 UI 스탯이나 바 길이를 조절하는 함수
    */
   private repositionUI() {
-    if (!this.uiText) return;
-    const fontSize = Math.max(12, Math.round(16 * this.uiScale));
-    this.uiText.setFontSize(fontSize);
-    this.uiText.setPosition(10 * this.uiScale, 10 * this.uiScale);
-
-    const barY = (10 + fontSize + 12) * this.uiScale;
-    this.xpBarBg.clear();
-    this.xpBarBg.fillStyle(0x555555, 1);
-    this.xpBarBg.fillRect(10 * this.uiScale, barY, this.barWidth, 16 * this.uiScale);
-
-    const hpBarY = barY + 20 * this.uiScale;
-    this.hpBarBg.clear();
-    this.hpBarBg.fillStyle(0x555555, 1);
-    this.hpBarBg.fillRect(10 * this.uiScale, hpBarY, this.barWidth, 12 * this.uiScale);
-
-    this.updateXPBar(this.myPlayerStats.xp, this.myPlayerStats.xpMax);
-    this.updateHPBar(this.myPlayerStats.hp, this.myPlayerStats.maxHp);
+    // React UI는 브라우저의 레이아웃을 따르므로 별도의 reposition 호출이 필요 없습니다.
   }
 
   /**
@@ -362,11 +341,9 @@ export class GameScene extends Phaser.Scene {
       console.log("Joined successfully", this.room.sessionId);
       this.mySessionId = this.room.sessionId; // 발급받은 아이디를 저장해 '나의 캐릭터 정보' 판단에 씀
 
-      this.uiText.setText("Connected!");
       this.setupRoomHandlers(); // 네트워크 콜백 설정 시작
     } catch (e) {
       console.error("JOIN ERROR", e);
-      this.uiText.setText("Failed to connect to server");
     }
   }
 
@@ -405,7 +382,7 @@ export class GameScene extends Phaser.Scene {
           levelUpsPending: player.levelUpsPending,
           magnetRadius: player.magnetRadius, shotgunLevel: player.shotgunLevel, bulletSize: player.bulletSize
         };
-        this.updateUIText(); // 우상단 스탯 정보 UI 텍스트 그리기 갱신
+        this.events.emit('onPlayerStatusUpdate', this.myPlayerStats); // React UI에 알림
 
         // 보간될 타겟 저장 위치 초기값
         this.playerTargets[sessionId] = { x: player.x, y: player.y };
@@ -425,10 +402,8 @@ export class GameScene extends Phaser.Scene {
             magnetRadius: player.magnetRadius, shotgunLevel: player.shotgunLevel, bulletSize: player.bulletSize
           };
 
-          // 즉시 바의 색상과 퍼센트 다시 그림
-          this.updateUIText();
-          this.updateXPBar(player.xp, player.xpMax);
-          this.updateHPBar(player.hp, player.maxHp);
+          // React UI 갱신을 위해 이벤트 방출
+          this.events.emit('onPlayerStatusUpdate', this.myPlayerStats);
 
           // 새로 생긴 레벨업 횟수가 존재하면 onLevelUp 이벤트를 부모 요소(React App.tsx)로 방출
           if (player.levelUpsPending > 0 && player.levelUpsPending > prevPending) {
@@ -687,55 +662,12 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * 화면 좌측 상단의 플레이어 레벨, 체력, ATK 등의 요약 정보를 그리는 UI 렌더
-   */
-  updateUIText() {
-    if (this.uiText && this.myPlayerStats) {
-      const p = this.myPlayerStats;
-      this.uiText.setText(
-        `Lv ${p.level}  XP: ${Math.floor(p.xp)}/${p.xpMax}\nATK:${p.damage} SPD:${p.attackSpeed}ms RNG:${p.range}\nHP: ${Math.floor(p.hp)}/${p.maxHp}`
-      );
-    }
-  }
-
-  /**
-   * 경험치 바의 길이를 퍼센테이지에 맞추어 그리기
-   * @param xp 현재 경험치량
-   * @param xpMax 최대 도달 필요 경험치량
-   */
-  updateXPBar(xp: number, xpMax: number) {
-    if (!this.xpBarFill) return;
-    this.xpBarFill.clear();                  // 기존 그려진 게이지 지우기
-    this.xpBarFill.fillStyle(0x00ff00, 1);   // 연녹색
-    const pct = Math.min(xp / xpMax, 1);     // 안전하게 퍼센트는 100% 이내로 고정시킴
-    const fontSize = Math.max(12, Math.round(16 * this.uiScale));
-    const barY = (10 + fontSize + 12) * this.uiScale;
-    // barWidth 기준으로 비례 도면에 그려 넣기
-    this.xpBarFill.fillRect(10 * this.uiScale, barY, this.barWidth * pct, 16 * this.uiScale);
-  }
-
-  /**
-   * 체력 바의 길이를 비율에 맞추어 그리기. 체력 소진 비율에 따라 색상을 위협적인 빨강톤으로 바꿉니다.
-   */
-  updateHPBar(hp: number, maxHp: number) {
-    if (!this.hpBarFill) return;
-    this.hpBarFill.clear();
-    const pct = Math.min(hp / maxHp, 1);
-
-    // 체력 감소에 따른 게이지 컬러 세팅 (안정: 녹색 -> 절반: 주황 -> 위험: 빨강)
-    if (pct > 0.5) {
-      this.hpBarFill.fillStyle(0x2ecc71, 1); // 녹색
-    } else if (pct > 0.25) {
-      this.hpBarFill.fillStyle(0xf39c12, 1); // 주황색
-    } else {
-      this.hpBarFill.fillStyle(0xe74c3c, 1); // 빨간색
-    }
-    const fontSize = Math.max(12, Math.round(16 * this.uiScale));
-    const barY = (10 + fontSize + 12) * this.uiScale;
-    const hpBarY = barY + 20 * this.uiScale; // 경험치바 아래로 내려놓음
-    this.hpBarFill.fillRect(10 * this.uiScale, hpBarY, this.barWidth * pct, 12 * this.uiScale);
-  }
+  // Phaser 내부 UI 렌더링 함수들 제거 (React로 이전)
+  /*
+  updateUIText() { ... }
+  updateXPBar(xp: number, xpMax: number) { ... }
+  updateHPBar(hp: number, maxHp: number) { ... }
+  */
 
   /**
    * 사용자가 UI(모달 등)에서 능력을 클릭했을 때 서버의 리셉터로 통지를 진행합니다.

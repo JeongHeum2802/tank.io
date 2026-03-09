@@ -8,6 +8,8 @@ import { LoginScreen } from './components/LoginScreen';
 import { Leaderboard } from './components/Leaderboard';
 import { LevelUpModal } from './components/LevelUpModal';
 import { StatOverlay } from './components/StatOverlay';
+import PlayerStatus from './components/PlayerStatus';
+import type { PlayerStats } from './types';
 
 /**
  * App 컴포넌트
@@ -34,6 +36,14 @@ function App() {
   const [statLevels, setStatLevels] = React.useState<StatLevels>({
     damage: 0, attackSpeed: 0, range: 0, speed: 0,
     maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0
+  });
+  // 현재 플레이어 실시간 스탯 (UI 표시용)
+  const [playerStats, setPlayerStats] = React.useState<PlayerStats>({
+    level: 1, xp: 0, xpMax: 100,
+    damage: 10, attackSpeed: 1000, range: 1000,
+    hp: 100, maxHp: 100,
+    levelUpsPending: 0,
+    magnetRadius: 0, shotgunLevel: 0, bulletSize: 1
   });
 
   // isJoined 상태가 true가 되면(로그인 성공 시) Phaser 게임을 초기화합니다.
@@ -84,6 +94,12 @@ function App() {
         scene.events.on('onStatUpdate', (data: StatLevels) => {
           setStatLevels(data);
         });
+        // ---------------------------------------------------------
+        // 인게임 실시간 상태(레벨, XP, HP, 스탯) 동기화 이벤트 수신
+        // ---------------------------------------------------------
+        scene.events.on('onPlayerStatusUpdate', (data: PlayerStats) => {
+          setPlayerStats(data);
+        });
       } else {
         // 씬이 아직 준비되지 않았다면 200ms 후 다시 시도합니다.
         setTimeout(setupSceneEvents, 200);
@@ -126,6 +142,10 @@ function App() {
       <Leaderboard leaderboard={leaderboard} isMobile={isMobile} />
       {/* 레벨업 발생 시 화면 중앙에 나타나는 스탯 업그레이드 모달 */}
       <LevelUpModal levelUpData={levelUpData} isMobile={isMobile} onUpgrade={handleStatUpgrade} />
+      
+      {/* (New) 리액트 기반 좌측 상단 플레이어 상태 UI */}
+      <PlayerStatus stats={playerStats} nickname={nickname} isMobile={isMobile} />
+
       {/* 좌측 하단 스탯 업그레이드 현황 오버레이 */}
       <StatOverlay statLevels={statLevels} isMobile={isMobile} />
     </div>
