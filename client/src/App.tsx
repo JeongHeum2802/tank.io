@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 
-import type { LevelUpState, LeaderboardEntry } from './types';
+import type { LevelUpState, LeaderboardEntry, StatLevels } from './types';
 import { isMobileDevice } from './utils/device';
 import { GameScene } from './game/GameScene';
 import { LoginScreen } from './components/LoginScreen';
 import { Leaderboard } from './components/Leaderboard';
 import { LevelUpModal } from './components/LevelUpModal';
+import { StatOverlay } from './components/StatOverlay';
 
 /**
  * App 컴포넌트
@@ -29,6 +30,11 @@ function App() {
   const [isJoined, setIsJoined] = React.useState<boolean>(false);
   // 현재 접속 환경이 모바일인지 여부를 저장 (UI 크기 및 배치 결정에 사용)
   const [isMobile] = React.useState<boolean>(isMobileDevice());
+  // 각 스탯별 업그레이드 횟수 상태 (StatOverlay에서 사용)
+  const [statLevels, setStatLevels] = React.useState<StatLevels>({
+    damage: 0, attackSpeed: 0, range: 0, speed: 0,
+    maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0
+  });
 
   // isJoined 상태가 true가 되면(로그인 성공 시) Phaser 게임을 초기화합니다.
   useEffect(() => {
@@ -74,6 +80,10 @@ function App() {
         scene.events.on('onLeaderboardUpdate', (data: LeaderboardEntry[]) => {
           setLeaderboard(data);
         });
+        // 스탯 업그레이드 횟수 변경 이벤트 수신
+        scene.events.on('onStatUpdate', (data: StatLevels) => {
+          setStatLevels(data);
+        });
       } else {
         // 씬이 아직 준비되지 않았다면 200ms 후 다시 시도합니다.
         setTimeout(setupSceneEvents, 200);
@@ -116,6 +126,8 @@ function App() {
       <Leaderboard leaderboard={leaderboard} isMobile={isMobile} />
       {/* 레벨업 발생 시 화면 중앙에 나타나는 스탯 업그레이드 모달 */}
       <LevelUpModal levelUpData={levelUpData} isMobile={isMobile} onUpgrade={handleStatUpgrade} />
+      {/* 좌측 하단 스탯 업그레이드 현황 오버레이 */}
+      <StatOverlay statLevels={statLevels} isMobile={isMobile} />
     </div>
   );
 }

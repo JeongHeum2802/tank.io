@@ -46,3 +46,18 @@ export interface LevelUpState {
         bulletSize: number;
     };
 }
+
+/**
+ * 각 스탯별 업그레이드 횟수를 추적하는 인터페이스
+ * StatOverlay 컴포넌트에서 사용되며, 플레이어가 몇 번 어떤 스탯을 올렸는지 보여줍니다.
+ */
+export interface StatLevels {
+    damage: number;
+    attackSpeed: number;
+    range: number;
+    speed: number;
+    maxHp: number;
+    magnetRadius: number;
+    shotgunLevel: number;
+    bulletSize: number;
+}

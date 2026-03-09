@@ -3,7 +3,7 @@ import * as Colyseus from 'colyseus.js';
 import { getStateCallbacks } from 'colyseus.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../utils/constants';
 import { isMobileDevice } from '../utils/device';
-import type { PlayerStats } from '../types';
+import type { PlayerStats, StatLevels } from '../types';
 
 /**
  * GameScene 클래스
@@ -55,6 +55,12 @@ export class GameScene extends Phaser.Scene {
     };
     private mySpeed: number = 200;                    // 내 캐릭터의 현재 이동 속도
     private latestChoices: string[] = [];             // 가장 최근 서버가 보내준 레벨업 선택지 캐시
+
+    // --- 스탯 업그레이드 횟수 추적 (StatOverlay에 표시용) ---
+    private myStatLevels: StatLevels = {
+        damage: 0, attackSpeed: 0, range: 0, speed: 0,
+        maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0
+    };
 
     // --- 모바일 가상 조이스틱을 위한 변수 ---
     private isMobile: boolean = false;                // 접속 기기 모바일 여부
@@ -726,6 +732,19 @@ export class GameScene extends Phaser.Scene {
         if (this.room) {
             // Colyseus 룸 메시지 발신 ('upgradeLevel', {stat: 종류}) 전파
             this.room.send("upgradeLevel", { stat });
+
+            // 스탯 업그레이드 횟수 카운팅 및 React에 방출
+            if (stat in this.myStatLevels) {
+                this.myStatLevels[stat as keyof StatLevels]++;
+                this.events.emit('onStatUpdate', { ...this.myStatLevels });
+            }
         }
+    }
+
+    /**
+     * 현재 업그레이드 횟수 정보를 반환합니다. (초기 로드 시 사용)
+     */
+    getStatLevels(): StatLevels {
+        return { ...this.myStatLevels };
     }
 }
