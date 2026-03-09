@@ -33,8 +33,7 @@ export class GameScene extends Phaser.Scene {
     private bulletVelocities: { [id: string]: { vx: number, vy: number } } = {};
     private sendTimer: number = 0; // 서버로 데이터 전송 빈도를 조절(throttling)하는 타이머
 
-    // 맵 배경 (스크롤링 되는 격자무늬 타일)
-    private gridBg!: Phaser.GameObjects.TileSprite;
+    // 맵 배경 (월드 공간에 배치되는 격자무늬 타일)
 
     // --- 좌측 상단 인게임 UI (Phaser Graphics 및 Text 기반) ---
     private uiText!: Phaser.GameObjects.Text;        // 레벨, 이름, 스탯 요약 텍스트
@@ -149,23 +148,30 @@ export class GameScene extends Phaser.Scene {
         // 카메라의 중심 좌표가 맵 경계선(0,0 ~ MAP_WIDTH,MAP_HEIGHT)을 벗어나지 않도록 통제
         this.cameras.main.setBounds(0, 0, MAP_WIDTH, MAP_HEIGHT);
 
-        // 격자 형태 무한 배경 스크롤 효과
-        // setScrollFactor(0) 덕분에 카메라 이동을 따라다니지만 스스로 타일이동하여 무한 맵인 것처럼 보입니다.
-        this.gridBg = this.add.tileSprite(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2,
-            this.cameras.main.width,
-            this.cameras.main.height,
+        // 모바일에서는 카메라를 축소(zoom-out)하여 더 넓은 시야를 확보합니다.
+        // 0.7배 = 약 1.43배 넓은 시야. 데스크톱은 기본 1x 유지.
+        if (this.isMobile) {
+            this.cameras.main.setZoom(0.7);
+        }
+
+        // 격자 배경을 월드 공간(World Space)에 배치합니다.
+        // setScrollFactor(0)을 사용하지 않으므로, 플레이어/구슬과 동일한 레이어에서 자연스럽게 스크롤됩니다.
+        this.add.tileSprite(
+            MAP_WIDTH / 2,   // 맵 중심에 배치
+            MAP_HEIGHT / 2,
+            MAP_WIDTH,
+            MAP_HEIGHT,
             'gridTile'
-        ).setScrollFactor(0).setDepth(-1);
+        ).setDepth(-1);
+
+        // zoom 보정값: UI는 카메라 스크롤을 따르지 않지만(setScrollFactor(0)) zoom의 영향을 받으므로
+        // 1/zoom 스케일을 적용하여 시각적 크기를 동일하게 유지합니다.
+        const uiZoomScale = 1 / this.cameras.main.zoom;
 
         // 창 크기가 변경(resize)될 때 호출되는 리스너 등록
         this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
-            if (!this.cameras.main || !this.gridBg) return;
-            // 카메라 화면 갱신 및 배경 크기 재배치
+            if (!this.cameras.main) return;
             this.cameras.main.setSize(gameSize.width, gameSize.height);
-            this.gridBg.setSize(gameSize.width, gameSize.height);
-            this.gridBg.setPosition(gameSize.width / 2, gameSize.height / 2);
             
             // 비율 계산 및 UI 요소를 리사이즈된 화면에 맞춤
             this.updateUIScale();
@@ -181,24 +187,24 @@ export class GameScene extends Phaser.Scene {
         this.uiText = this.add.text(10 * this.uiScale, 10 * this.uiScale, 'Connecting...', {
             fontSize: `${fontSize}px`, color: '#ffffff', backgroundColor: '#000000aa',
             padding: { x: 4, y: 3 }
-        }).setScrollFactor(0).setDepth(100);
+        }).setScrollFactor(0).setDepth(100).setScale(uiZoomScale);
 
         // 경험치(XP) 진행 바 배경 구성
         const barY = (10 + fontSize + 12) * this.uiScale;
-        this.xpBarBg = this.add.graphics().setScrollFactor(0).setDepth(100);
+        this.xpBarBg = this.add.graphics().setScrollFactor(0).setDepth(100).setScale(uiZoomScale);
         this.xpBarBg.fillStyle(0x555555, 1);
         this.xpBarBg.fillRect(10 * this.uiScale, barY, this.barWidth, 16 * this.uiScale);
 
-        this.xpBarFill = this.add.graphics().setScrollFactor(0).setDepth(100);
+        this.xpBarFill = this.add.graphics().setScrollFactor(0).setDepth(100).setScale(uiZoomScale);
         this.updateXPBar(0, 100);
 
         // 체력(HP) 진행 바 설정
         const hpBarY = barY + 20 * this.uiScale;
-        this.hpBarBg = this.add.graphics().setScrollFactor(0).setDepth(100);
+        this.hpBarBg = this.add.graphics().setScrollFactor(0).setDepth(100).setScale(uiZoomScale);
         this.hpBarBg.fillStyle(0x555555, 1);
         this.hpBarBg.fillRect(10 * this.uiScale, hpBarY, this.barWidth, 12 * this.uiScale);
 
-        this.hpBarFill = this.add.graphics().setScrollFactor(0).setDepth(100);
+        this.hpBarFill = this.add.graphics().setScrollFactor(0).setDepth(100).setScale(uiZoomScale);
         this.updateHPBar(100, 100);
 
         // 모바일 기기로 인식했다면 가상 조이스틱용 터치패드를 생성합니다.
@@ -562,11 +568,7 @@ export class GameScene extends Phaser.Scene {
 
         const dt = delta / 1000; // 밀리초(ms) → 초(seconds) 단위로 변환해 위치 연산에 활용
 
-        // 배경(그리드)의 오프셋 값을 카메라 X,Y 값과 동일하게 잡아 무한하게 맵 패턴이 반복 전개되어 스크롤 되는 효과를 줍니다
-        if (this.gridBg) {
-            this.gridBg.tilePositionX = this.cameras.main.scrollX;
-            this.gridBg.tilePositionY = this.cameras.main.scrollY;
-        }
+        // 배경(그리드)은 이제 월드 공간에 배치되어 있으므로 tilePosition 동기화가 필요 없습니다.
 
         // --- 내 캐릭터 클라이언트 예측 처리 (Client-side Prediction/Lerping) ---
         if (this.mySprite) {
