@@ -20,10 +20,19 @@ export class GameRoom extends Room<GameState> {
       this.spawnOrb();
     }
 
-    // 주기적 구슬 생성 (2초마다 5개씩)
+    // 주기적 구슬 생성 (유저 수에 비례하여 생성, 유저가 없으면 생성 안함)
     this.clock.setInterval(() => {
-      for (let i = 0; i < 5; i++) {
-        this.spawnOrb();
+      const playerCount = this.state.players.size;
+      if (playerCount === 0) return; // 사람이 없으면 구슬 조각 안 뽑음
+
+      // 1명당 2초에 5개씩 생성. (ex: 2명이면 10개, 3명이면 15개)
+      const spawnCount = playerCount * 5;
+
+      // 구슬 갯수가 너무 많아지는 것 방지 (서버 부하 제한: 맵에 구슬 500개까지만)
+      if (this.state.orbs.size < 500) {
+        for (let i = 0; i < spawnCount; i++) {
+          this.spawnOrb();
+        }
       }
     }, 2000);
 
