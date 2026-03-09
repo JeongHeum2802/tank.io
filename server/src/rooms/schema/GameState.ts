@@ -24,6 +24,9 @@ export class Player extends Schema {
   @type("number") shotgunLevel: number = 0; // 다중 발사 레벨 (0=단발, 1=3발 부채꼴, 2=5발 등)
   @type("number") bulletSize: number = 1;   // 총알 크기 스케일 (기본 1)
 
+  @type("boolean") isBot: boolean = false;   // AI 봇 여부 판별
+  @type("number") color: number = 0xffffff;  // 플레이어 고유 색상 (Hex)
+
   // 내부 서버 로직용 (levelUpsPending은 클라이언트에도 동기화 필요)
   fireTimer: number = 0;
   @type("number") levelUpsPending: number = 0;
@@ -49,6 +52,7 @@ export class Bullet extends Schema {
   @type("string") ownerId: string = "";
   damage: number = 10;
   @type("number") scale: number = 1; // 총알의 시각적/물리적 크기 배율
+  @type("number") color: number = 0xffffff; // 총알 색상 (발사 주체와 동일)
 }
 
 export class GameState extends Schema {

@@ -16,7 +16,7 @@ const STAT_UI_CONFIG: Record<string, { icon: string; name: string; desc: string;
   maxHp: { icon: '❤️', name: '최대체력', desc: '+20', color: '#e84393' },
   magnetRadius: { icon: '🧲', name: '자석', desc: '범위 +30', color: '#9b59b6' },
   shotgunLevel: { icon: '🔫', name: '다중 발사', desc: '발사체 +2', color: '#f39c12' },
-  bulletSize: { icon: '💣', name: '총알 크기', desc: '크기 +50%', color: '#34495e' },
+  bulletSize: { icon: '💣', name: '총알 크기', desc: '크기 +30%', color: '#34495e' },
 };
 
 /**

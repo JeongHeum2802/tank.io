@@ -369,6 +369,7 @@ export class GameScene extends Phaser.Scene {
       if (sessionId === this.mySessionId) {
         this.mySprite = this.add.sprite(player.x, player.y, 'playerTexture');
         this.mySprite.setDepth(10);
+        this.mySprite.setTint(player.color); // 내 탱크 색상 적용
 
         // 내 캐릭터 주변을 카메라가 자동으로 중앙에 오도록 고정(Follow)
         this.cameras.main.startFollow(this.mySprite, true, 1, 1);
@@ -446,6 +447,7 @@ export class GameScene extends Phaser.Scene {
 
       // 나와 다른 제3 플레이어가 접속했을 경우
       const sprite = this.add.sprite(player.x, player.y, 'playerTexture');
+      sprite.setTint(player.color); // 제3자 탱크 색상 적용
       this.playerSprites[sessionId] = sprite;
       this.playerTargets[sessionId] = { x: player.x, y: player.y };
 
@@ -491,6 +493,7 @@ export class GameScene extends Phaser.Scene {
     // --- 투사체 총알 (Bullets) 동기화 ---
     $(this.room.state).bullets.onAdd((bullet: any, bulletId: string) => {
       const sprite = this.add.sprite(bullet.x, bullet.y, 'bulletTexture');
+      sprite.setTint(bullet.color); // 총알 색상 적용 (발사 우체 색상)
 
       // 총알 스케일 반영 (기본 1)
       const scale = bullet.scale || 1;

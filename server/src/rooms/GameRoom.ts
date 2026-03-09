@@ -36,6 +36,16 @@ export class GameRoom extends Room<GameState> {
       }
     }, 2000);
 
+    // AI 봇 인구 관리 (유저가 적으면 봇을 채워넣음)
+    this.clock.setInterval(() => {
+      const MAX_TOTAL_ENTITIES = 8; // 목표 총 개체 수 (사람 + 봇)
+      const currentTotal = this.state.players.size;
+
+      if (currentTotal < MAX_TOTAL_ENTITIES) {
+        this.spawnBot();
+      }
+    }, 5000); // 5초마다 인구 체크
+
     // 이동 패킷 수신
     this.onMessage("move", (client, message: { x: number, y: number }) => {
       const player = this.state.players.get(client.sessionId);
@@ -85,6 +95,13 @@ export class GameRoom extends Room<GameState> {
     player.hp = 100;
     player.maxHp = 100;
 
+    // 플레이어 랜덤 색상 부여 (더 다양하고 선명한 색상들)
+    const playerColors = [
+      0xff4d4d, 0x4d79ff, 0x4dff4d, 0xffff4d, 0x9f4dff, 0xffa34d, 0x4dffff, 0xff4dff,
+      0xff1493, 0x00ff7f, 0x40e0d0, 0xff7f50, 0x32cd32, 0x00bfff, 0xffd700, 0xff4500
+    ];
+    player.color = playerColors[Math.floor(Math.random() * playerColors.length)];
+
     this.state.players.set(client.sessionId, player);
   }
 
@@ -114,6 +131,33 @@ export class GameRoom extends Room<GameState> {
     this.state.orbs.set(this.generateId(), orb);
   }
 
+  spawnBot() {
+    const botId = `bot_${this.generateId()}`;
+    const bot = new Player();
+
+    // 봇 이름 목록 (탱크 관련 이름들)
+    const botNames = ["Tanky", "Steel", "Buster", "Blaster", "Sherman", "Panzer", "Tiger", "Ironman", "Soldier", "Guardian"];
+    bot.nickname = "AI " + botNames[Math.floor(Math.random() * botNames.length)];
+
+    bot.isBot = true;
+    bot.x = Math.random() * MAP_WIDTH;
+    bot.y = Math.random() * MAP_HEIGHT;
+    bot.targetX = bot.x;
+    bot.targetY = bot.y;
+    bot.hp = 100;
+    bot.maxHp = 100;
+
+    // 봇 랜덤 색상 부여 (더 다양하고 선명한 색상들)
+    const botColors = [
+      0xff4d4d, 0x4d79ff, 0x4dff4d, 0xffff4d, 0x9f4dff, 0xffa34d, 0x4dffff, 0xff4dff,
+      0xff1493, 0x00ff7f, 0x40e0d0, 0xff7f50, 0x32cd32, 0x00bfff, 0xffd700, 0xff4500
+    ];
+    bot.color = botColors[Math.floor(Math.random() * botColors.length)];
+
+    this.state.players.set(botId, bot);
+    console.log("Spawned Bot:", bot.nickname, botId);
+  }
+
   generateId() {
     return Math.random().toString(36).substring(2, 9);
   }
@@ -140,6 +184,83 @@ export class GameRoom extends Room<GameState> {
       // -- 맵 바운더리 검사 --
       player.x = Math.max(0, Math.min(player.x, MAP_WIDTH));
       player.y = Math.max(0, Math.min(player.y, MAP_HEIGHT));
+
+      // -- AI 봇 전용 로직 (이동 및 타겟팅) --
+      if (player.isBot) {
+        // 1. 이동 대상 탐색 (구슬 우선, 없으면 방황)
+        const distToTarget = Math.sqrt(Math.pow(player.targetX - player.x, 2) + Math.pow(player.targetY - player.y, 2));
+
+        // 도착했거나 목표가 없으면 새로운 목표(가까운 구슬) 찾기
+        if (distToTarget < 50 || Math.random() < 0.01) { // 1% 확률로 갑자기 목표 변경 (방황 방지)
+          let nearestOrb: Orb | null = null;
+          let minDist = 600; // 탐색 범위
+
+          this.state.orbs.forEach((orb: Orb) => {
+            const d = Math.sqrt(Math.pow(orb.x - player.x, 2) + Math.pow(orb.y - player.y, 2));
+            if (d < minDist) {
+              minDist = d;
+              nearestOrb = orb;
+            }
+          });
+
+          if (nearestOrb) {
+            const orbObj = nearestOrb as Orb;
+            player.targetX = orbObj.x;
+            player.targetY = orbObj.y;
+          } else {
+            // 주변에 구슬이 없으면 랜덤 방황
+            if (distToTarget < 50) {
+              player.targetX = Math.random() * MAP_WIDTH;
+              player.targetY = Math.random() * MAP_HEIGHT;
+            }
+          }
+        }
+
+        // 2. 조준 대상 탐색 (이동과는 독립적으로 수행)
+        let nearestEnemy: Player | null = null;
+        let minPlayerDist = 600; // 사격 감지 범위
+
+        this.state.players.forEach((p, sid) => {
+          if (sid === sessionId) return;
+          const d = Math.sqrt(Math.pow(p.x - player.x, 2) + Math.pow(p.y - player.y, 2));
+          if (d < minPlayerDist) {
+            minPlayerDist = d;
+            nearestEnemy = p;
+          }
+        });
+
+        // 적이 사정권 내에 있으면 그 방향으로 발사 (너프된 정확도 유지)
+        if (nearestEnemy && Math.random() < 0.2) {
+          const enemy = nearestEnemy as Player;
+          const errorX = (Math.random() - 0.5) * 120;
+          const errorY = (Math.random() - 0.5) * 120;
+
+          // 이동 타겟과는 별개로 '발사 방향'을 위한 임시 타겟 설정 (Phaser Scene에서 targetX/Y를 바라봄)
+          // 주의: 현재 서버 로직은 targetX/Y를 이동과 사격 양쪽에 공용으로 사용하고 있음.
+          // 이동 경로를 해치지 않으면서 쏘려면 '발사 방향'을 별도 필드로 두는게 좋으나, 
+          // 현재 구조를 유지하며 '잠깐잠깐' 적을 쳐다보는 식으로 구현.
+          player.targetX = enemy.x + errorX;
+          player.targetY = enemy.y + errorY;
+        }
+
+        // 3. 자동 레벨업 (포인트가 있으면 랜덤 투자)
+        if (player.levelUpsPending > 0) {
+          const statsPool = ['damage', 'attackSpeed', 'range', 'speed', 'maxHp', 'magnetRadius', 'shotgunLevel', 'bulletSize'];
+          const randomStat = statsPool[Math.floor(Math.random() * statsPool.length)];
+
+          // 기존 upgradeLevel 로직 재사용 (껍데기 함수 호출 대신 직접 적용)
+          if (randomStat === "damage") player.damage += 5;
+          else if (randomStat === "attackSpeed") player.attackSpeed = Math.max(100, player.attackSpeed - 100);
+          else if (randomStat === "range") player.range += 500;
+          else if (randomStat === "speed") player.speed += 20;
+          else if (randomStat === "maxHp") { player.maxHp += 20; player.hp += 20; }
+          else if (randomStat === "magnetRadius") player.magnetRadius += 20;
+          else if (randomStat === "shotgunLevel") player.shotgunLevel += 1;
+          else if (randomStat === "bulletSize") player.bulletSize += 0.3; // 오타 수정: *= 0.3 -> += 0.3 (크기 +30%)
+
+          player.levelUpsPending--;
+        }
+      }
 
       // -- 총알 발사 로직 --
       // 레벨업 대기 중일 때는 발사하지 않음
@@ -176,6 +297,9 @@ export class GameRoom extends Room<GameState> {
 
             // bulletSize를 속성으로 추가 (GameState.ts의 Bullet 클래스 scale 변수에 반영됨)
             bullet.scale = player.bulletSize || 1;
+
+            // 총알 색상을 플레이어 색상과 동기화
+            bullet.color = player.color;
 
             bullet.velocityX = Math.cos(angle) * 400;
             bullet.velocityY = Math.sin(angle) * 400;
