@@ -1,5 +1,6 @@
 import http from "http";
 import express from "express";
+import paymentRouter from "./routes/payment";
 import { Server } from "colyseus";
 import { Encoder } from "@colyseus/schema";
 import { WebSocketTransport } from "@colyseus/ws-transport"
@@ -13,6 +14,9 @@ const port = Number(process.env.PORT) || 25565;
 const app = express();
 
 app.use(express.json());
+
+// 결제 API 라우터 연결
+app.use("/api/payments", paymentRouter);
 
 // 프론트엔드 빌드 정적 파일 서빙
 app.use(express.static(path.join(__dirname, "..", "public")));

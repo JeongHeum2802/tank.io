@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { SupportModal } from './SupportModal';
 
 // 외부에서 주입받는 props의 타입을 정의합니다.
 interface LoginScreenProps {
@@ -13,6 +14,8 @@ interface LoginScreenProps {
  * 모바일(클램프 폰트 사이즈 등)과 데스크톱 모두에서 잘 보이도록 반응형 스타일이 적용되어 있습니다.
  */
 export const LoginScreen: React.FC<LoginScreenProps> = ({ nickname, setNickname, onJoin }) => {
+    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+
     return (
         <div style={{
             // 화면 중앙에 요소를 수직으로 배치
@@ -69,7 +72,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ nickname, setNickname,
                 >
                     Play
                 </button>
+                <button 
+                    onClick={() => setIsSupportModalOpen(true)}
+                    style={{
+                        marginTop: '40px', padding: '10px 20px', borderRadius: '8px',
+                        backgroundColor: '#2d3436', color: '#dfe6e9', border: '1px solid #636e72',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                        width: 'fit-content', alignSelf: 'center', transition: 'all 0.2s', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                    onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                    <span style={{ fontSize: '18px' }}>💖</span> 개발자 커피 사주기
+                </button>
             </div>
+
+            {/* 커피 후원 모달창 팝업 */}
+            {isSupportModalOpen && (
+                <SupportModal onClose={() => setIsSupportModalOpen(false)} />
+            )}
         </div>
     );
 };

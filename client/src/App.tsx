@@ -46,6 +46,38 @@ function App() {
     magnetRadius: 0, shotgunLevel: 0, bulletSize: 1
   });
 
+  // 토스 결제 후 돌아왔을 때 URL 파라미터 처리 (승인 API 호출)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentKey = params.get("paymentKey");
+    const orderId = params.get("orderId");
+    const amount = Number(params.get("amount"));
+
+    if (paymentKey && orderId && amount) {
+      // url 쓰레기 정리 (깔끔하게)
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // 우리 백엔드로 최종 승인 요청 (돈이 빠져나가는 진짜 단계)
+      fetch("/api/payments/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentKey, orderId, amount })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert(`결제 승인 실패: ${data.error}`);
+        } else {
+          alert("☕ 개발자 후원(결제)이 완료되었습니다! 정말 감사합니다!");
+        }
+      })
+      .catch(err => {
+        console.error("결제 승인 중 오류:", err);
+        alert("결제 승인 중 오류가 발생했습니다.");
+      });
+    }
+  }, []);
+
   // isJoined 상태가 true가 되면(로그인 성공 시) Phaser 게임을 초기화합니다.
   useEffect(() => {
     if (!isJoined || !gameContainer.current || gameRef.current) return;
