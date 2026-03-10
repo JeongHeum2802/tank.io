@@ -6,9 +6,9 @@ export class AssetManager {
    * @param scene 현재 씬
    */
   static preload(scene: Phaser.Scene) {
-    // 플레이어 텍스처 생성 (파란색으로 채워진 반경 20픽셀 원)
+    // 플레이어 텍스처 생성 (흰색 원, 렌더링 시 setTint 보정)
     const playerGfx = scene.make.graphics({ x: 0, y: 0 });
-    playerGfx.fillStyle(0x3498db, 1);
+    playerGfx.fillStyle(0xffffff, 1);
     playerGfx.fillCircle(20, 20, 20);
     playerGfx.generateTexture('playerTexture', 40, 40);
     playerGfx.destroy();
@@ -32,9 +32,9 @@ export class AssetManager {
     orbLargeGfx.generateTexture('orbLarge', 28, 28);
     orbLargeGfx.destroy();
 
-    // 발사체(총알) 텍스처 생성 (노란 점)
+    // 발사체(총알) 텍스처 생성 (흰색 점, 렌더링 시 setTint 보정)
     const bulletGfx = scene.make.graphics({ x: 0, y: 0 });
-    bulletGfx.fillStyle(0xf1c40f, 1);
+    bulletGfx.fillStyle(0xffffff, 1);
     bulletGfx.fillCircle(5, 5, 5);
     bulletGfx.generateTexture('bulletTexture', 10, 10);
     bulletGfx.destroy();
