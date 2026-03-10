@@ -66,6 +66,10 @@ export class PlayerManager {
       player.shotgunLevel += 1;
     } else if (stat === "bulletSize") {
       player.bulletSize += 0.3;
+    } else if (stat === "accuracy") {
+      player.accuracy += 1;
+    } else if (stat === "bulletSpeed") {
+      player.bulletSpeed += 50;
     }
   }
 

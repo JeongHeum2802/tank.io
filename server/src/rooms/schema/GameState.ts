@@ -19,10 +19,12 @@ export class Player extends Schema {
   @type("number") hp: number = 100;
   @type("number") maxHp: number = 100;
 
-  // 신규 추가된 확장 스탯들
+  // 신규 추가된 확장 스탯
   @type("number") magnetRadius: number = 0; // 자석 사거리 (기본 0)
   @type("number") shotgunLevel: number = 0; // 다중 발사 레벨 (0=단발, 1=3발 부채꼴, 2=5발 등)
   @type("number") bulletSize: number = 1;   // 총알 크기 스케일 (기본 1)
+  @type("number") accuracy: number = 0;     // 집탄률 (높을수록 다중 발사 각도가 좁아짐)
+  @type("number") bulletSpeed: number = 400; // 총알 발사 속도
 
   @type("boolean") isBot: boolean = false;   // AI 봇 여부 판별
   @type("number") color: number = 0xffffff;  // 플레이어 고유 색상 (Hex)

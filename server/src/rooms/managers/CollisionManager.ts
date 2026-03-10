@@ -68,27 +68,16 @@ export class CollisionManager {
           bulletsToRemove.push(bulletId);
 
           if (player.hp <= 0) {
-            player.x = Math.random() * MAP_WIDTH;
-            player.y = Math.random() * MAP_HEIGHT;
-            player.targetX = player.x;
-            player.targetY = player.y;
-            player.level = 1;
-            player.maxHp = 100;
-            player.hp = player.maxHp;
-            player.xp = 0;
-            player.xpMax = 100;
-            player.levelUpsPending = 0;
-            player.damage = 10;
-            player.attackSpeed = 1000;
-            player.range = 1000;
-            player.speed = 200;
-            player.magnetRadius = 0;
-            player.shotgunLevel = 0;
-            player.bulletSize = 1;
-
-            const clientTarget = this.room.clients.find(c => c.sessionId === sessionId);
-            if (clientTarget) {
-              clientTarget.send("onPlayerDeath");
+            if (player.isBot) {
+              // 봇 사망 시 방 상태(MapSchema)에서 직접 삭제 (새 봇은 나중에 자동 스폰됨)
+              this.room.state.players.delete(sessionId);
+              console.log("Deleted Bot:", sessionId);
+            } else {
+              // 실제 유저 사망 시 클라이언트에 신호 전파
+              const clientTarget = this.room.clients.find(c => c.sessionId === sessionId);
+              if (clientTarget) {
+                clientTarget.send("onPlayerDeath");
+              }
             }
           }
         }

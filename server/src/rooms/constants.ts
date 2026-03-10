@@ -13,5 +13,5 @@ export const BOT_NAMES = [
 
 export const STATS_POOL = [
   'damage', 'attackSpeed', 'range', 'speed', 
-  'maxHp', 'magnetRadius', 'shotgunLevel', 'bulletSize'
+  'maxHp', 'magnetRadius', 'shotgunLevel', 'bulletSize', 'accuracy', 'bulletSpeed'
 ];
