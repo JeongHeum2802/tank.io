@@ -16,6 +16,8 @@ const STAT_DISPLAY: Record<string, { icon: string; name: string }> = {
   magnetRadius: { icon: '🧲', name: '자석' },
   shotgunLevel: { icon: '🔫', name: '다중발사' },
   bulletSize: { icon: '💣', name: '총알크기' },
+  accuracy: { icon: '🎯', name: '집탄률' },
+  bulletSpeed: { icon: '🚀', name: '탄환속도' }
 };
 
 /**

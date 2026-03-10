@@ -190,7 +190,10 @@ export class EntityManager {
         if (target) {
           const dx = target.x - sprite.x;
           const dy = target.y - sprite.y;
-          if (dx * dx + dy * dy > 2500) {
+          
+          // 총알 타겟팅이 현재 타겟 위치보다 너무 멀리 떨어져 있으면 순간 이동. 
+          // 속도가 빨라지면 threshold를 늘려서(예: 10000) 잦은 순간이동(끊김)을 방지합니다.
+          if (dx * dx + dy * dy > 10000) {
             sprite.x = target.x;
             sprite.y = target.y;
           }

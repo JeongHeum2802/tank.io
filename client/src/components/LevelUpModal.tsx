@@ -17,6 +17,8 @@ const STAT_UI_CONFIG: Record<string, { icon: string; name: string; desc: string;
   magnetRadius: { icon: '🧲', name: '자석', desc: '범위 +30', color: '#9b59b6' },
   shotgunLevel: { icon: '🔫', name: '다중 발사', desc: '발사체 +2', color: '#f39c12' },
   bulletSize: { icon: '💣', name: '총알 크기', desc: '크기 +30%', color: '#34495e' },
+  accuracy: { icon: '🎯', name: '집탄률', desc: '각도 10% 감소', color: '#16a085' },
+  bulletSpeed: { icon: '🚀', name: '탄환 속도', desc: '속도 +50', color: '#8e44ad' },
 };
 
 /**
