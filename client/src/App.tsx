@@ -100,6 +100,26 @@ function App() {
         scene.events.on('onPlayerStatusUpdate', (data: PlayerStats) => {
           setPlayerStats(data);
         });
+
+        // ---------------------------------------------------------
+        // 사망 및 접속 종료 시 React 상태 초기화 (메인 화면 복귀)
+        // ---------------------------------------------------------
+        scene.events.on('onGameOver', () => {
+          setIsJoined(false);
+          setLevelUpData(null);
+          setLeaderboard([]);
+          setStatLevels({
+            damage: 0, attackSpeed: 0, range: 0, speed: 0,
+            maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0
+           });
+           setPlayerStats({
+            level: 1, xp: 0, xpMax: 100,
+            damage: 10, attackSpeed: 1000, range: 1000,
+            hp: 100, maxHp: 100,
+            levelUpsPending: 0,
+            magnetRadius: 0, shotgunLevel: 0, bulletSize: 1
+           });
+        });
       } else {
         // 씬이 아직 준비되지 않았다면 200ms 후 다시 시도합니다.
         setTimeout(setupSceneEvents, 200);

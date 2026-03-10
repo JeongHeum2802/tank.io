@@ -64,6 +64,14 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(100, () => {
       this.network.connectToServer(this.myNickname);
     });
+
+    // 6. 사망 이벤트 핸들링 (React 단에 알리기 위해 이벤트 전파만 수행)
+    this.events.on('onPlayerDeath', () => {
+      if (this.network) {
+        this.network.disconnect();
+      }
+      this.events.emit('onGameOver');
+    });
   }
 
   update(_time: number, delta: number) {

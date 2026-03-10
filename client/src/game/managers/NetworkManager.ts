@@ -93,11 +93,8 @@ export class NetworkManager {
         });
 
         this.room.onMessage("onPlayerDeath", () => {
-          this.myStatLevels = {
-            damage: 0, attackSpeed: 0, range: 0, speed: 0,
-            maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0
-          };
-          this.scene.events.emit('onStatUpdate', { ...this.myStatLevels });
+          // 사망 시 GameScene 쪽에 이를 알리는 커스텀 이벤트 발송
+          this.scene.events.emit('onPlayerDeath');
         });
 
       } else {
@@ -185,6 +182,12 @@ export class NetworkManager {
           this.room.send("move", { x: pointerWorld.x, y: pointerWorld.y });
         }
       }
+    }
+  }
+
+  disconnect() {
+    if (this.room) {
+      this.room.leave();
     }
   }
 
