@@ -24,7 +24,15 @@ export class CollisionManager {
           while (player.xp >= player.xpMax) {
             player.xp -= player.xpMax;
             player.level += 1;
-            player.xpMax = Math.floor(player.xpMax * 1.1);
+            if (player.level < 25) {
+              player.xpMax = Math.floor(player.xpMax * 1.1);
+            } else if (player.level < 40) {
+              player.xpMax = Math.floor(player.xpMax * 1.05);
+            } else if (player.level < 55) {
+              player.xpMax = Math.floor(player.xpMax * 1.02);
+            } else {
+              player.xpMax = Math.floor(player.xpMax * 1.005);
+            }
             player.levelUpsPending++;
 
             player.maxHp += 10;
