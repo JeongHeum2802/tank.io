@@ -9,18 +9,20 @@ export class NetworkManager {
   private client!: Colyseus.Client;
   private room!: Colyseus.Room;
   private entityManager: EntityManager;
-  
+
   private myPlayerStats: PlayerStats = {
     level: 1, xp: 0, xpMax: 100,
     damage: 10, attackSpeed: 1000, range: 1000,
     hp: 100, maxHp: 100,
     levelUpsPending: 0,
-    magnetRadius: 0, shotgunLevel: 0, bulletSize: 1
+    magnetRadius: 0, shotgunLevel: 0, bulletSize: 1,
+    accuracy: 0, bulletSpeed: 400, speed: 200
   };
 
   private myStatLevels: StatLevels = {
     damage: 0, attackSpeed: 0, range: 0, speed: 0,
-    maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0
+    maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0,
+    accuracy: 0, bulletSpeed: 0
   };
 
   private latestChoices: string[] = [];
@@ -156,14 +158,15 @@ export class NetworkManager {
       damage: player.damage, attackSpeed: player.attackSpeed,
       range: player.range, hp: player.hp, maxHp: player.maxHp,
       levelUpsPending: player.levelUpsPending,
-      magnetRadius: player.magnetRadius, shotgunLevel: player.shotgunLevel, bulletSize: player.bulletSize
+      magnetRadius: player.magnetRadius, shotgunLevel: player.shotgunLevel, bulletSize: player.bulletSize,
+      accuracy: player.accuracy, bulletSpeed: player.bulletSpeed, speed: player.speed
     };
   }
 
   /**
    * 클라이언트의 입력값(터치 패드나 마우스)을 50ms마다 서버로 송신합니다.
    */
-  sendMoveIfReady(delta: number, isMobile: boolean, joystickActive: boolean, joystickVector: {x:number, y:number}, pointerWorld: {x:number, y:number} | null) {
+  sendMoveIfReady(delta: number, isMobile: boolean, joystickActive: boolean, joystickVector: { x: number, y: number }, pointerWorld: { x: number, y: number } | null) {
     if (!this.room) return;
     this.sendTimer += delta;
     if (this.sendTimer >= 50) {

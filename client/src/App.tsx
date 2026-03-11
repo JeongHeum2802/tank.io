@@ -35,7 +35,8 @@ function App() {
   // 각 스탯별 업그레이드 횟수 상태 (StatOverlay에서 사용)
   const [statLevels, setStatLevels] = React.useState<StatLevels>({
     damage: 0, attackSpeed: 0, range: 0, speed: 0,
-    maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0
+    maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0,
+    accuracy: 0, bulletSpeed: 0
   });
   // 현재 플레이어 실시간 스탯 (UI 표시용)
   const [playerStats, setPlayerStats] = React.useState<PlayerStats>({
@@ -43,7 +44,8 @@ function App() {
     damage: 10, attackSpeed: 1000, range: 1000,
     hp: 100, maxHp: 100,
     levelUpsPending: 0,
-    magnetRadius: 0, shotgunLevel: 0, bulletSize: 1
+    magnetRadius: 0, shotgunLevel: 0, bulletSize: 1,
+    accuracy: 0, bulletSpeed: 400, speed: 200
   });
 
   // 토스 결제 후 돌아왔을 때 URL 파라미터 처리 (승인 API 호출)
@@ -142,14 +144,16 @@ function App() {
           setLeaderboard([]);
           setStatLevels({
             damage: 0, attackSpeed: 0, range: 0, speed: 0,
-            maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0
+            maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0,
+            accuracy: 0, bulletSpeed: 0
            });
            setPlayerStats({
             level: 1, xp: 0, xpMax: 100,
             damage: 10, attackSpeed: 1000, range: 1000,
             hp: 100, maxHp: 100,
             levelUpsPending: 0,
-            magnetRadius: 0, shotgunLevel: 0, bulletSize: 1
+            magnetRadius: 0, shotgunLevel: 0, bulletSize: 1,
+            accuracy: 0, bulletSpeed: 400, speed: 200
            });
         });
       } else {

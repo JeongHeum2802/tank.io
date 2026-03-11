@@ -108,7 +108,8 @@ export class GameScene extends Phaser.Scene {
     }
     return {
       damage: 0, attackSpeed: 0, range: 0, speed: 0,
-      maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0
+      maxHp: 0, magnetRadius: 0, shotgunLevel: 0, bulletSize: 0,
+      accuracy: 0, bulletSpeed: 0
     };
   }
 }
